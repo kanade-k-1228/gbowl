@@ -1,6 +1,7 @@
 import { FC, useEffect, useState } from "react";
 import { useDeviceMotion } from "../hook/useDeviceMotion";
 import { Plot } from "./Plot/Plot";
+import { Bowl } from "./Bowl/Bowl";
 
 export const App: FC = () => {
   const {
@@ -100,6 +101,7 @@ export const App: FC = () => {
         <strong>Interval:</strong> {interval} ms
       </p>
       <Plot acc={acc} gyro={gyro} />
+      <Bowl acc={acceleration} />
     </div>
   );
 };
