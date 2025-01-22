@@ -1,51 +1,16 @@
 import { FC } from "react";
-import { Scatter } from "react-chartjs-2";
 
 export const Bowl: FC<{ acc: { x: number; y: number; z: number } }> = ({
   acc,
 }) => {
-  const data = {
-    datasets: [
-      {
-        label: "Acceleration",
-        data: [{ x: acc.x, y: acc.y }],
-        borderColor: "rgba(75,192,192,1)",
-        backgroundColor: "rgba(75,192,192,0.2)",
-      },
-    ],
-  };
-
+  const scale = 100;
   return (
-    <Scatter
-      data={data}
-      options={{
-        responsive: true,
-        plugins: {
-          legend: {
-            position: "top",
-          },
-          title: {
-            display: true,
-            text: "Acceleration Scatter Plot",
-          },
-        },
-        scales: {
-          x: {
-            type: "linear",
-            position: "bottom",
-            title: {
-              display: true,
-              text: "X Axis",
-            },
-          },
-          y: {
-            title: {
-              display: true,
-              text: "Y Axis",
-            },
-          },
-        },
-      }}
-    />
+    <svg width="100" height="100" viewBox="-100 -100 200 200">
+      <circle cx={acc.x * scale} cy={acc.y * scale} r="5" fill="blue" />
+      <circle cx="0" cy="0" r="25" stroke="gray" fill="none" />
+      <circle cx="0" cy="0" r="50" stroke="gray" fill="none" />
+      <circle cx="0" cy="0" r="75" stroke="gray" fill="none" />
+      <circle cx="0" cy="0" r="100" stroke="gray" fill="none" />
+    </svg>
   );
 };

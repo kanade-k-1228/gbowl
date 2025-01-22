@@ -2,6 +2,7 @@ import { FC, useEffect, useState } from "react";
 import { useDeviceMotion } from "../hook/useDeviceMotion";
 import { Plot } from "./Plot/Plot";
 import { Bowl } from "./Bowl/Bowl";
+import "./App.css";
 
 export const App: FC = () => {
   const {
@@ -41,62 +42,38 @@ export const App: FC = () => {
     <div>
       <h1>Device Motion</h1>
       {!permissionGranted && <button onClick={requestPermission}>Start</button>}
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th>x</th>
-            <th>y</th>
-            <th>z</th>
-            <th>abs</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <strong>Acc</strong>
-            </td>
-            <td>{acceleration.x.toFixed(2)}</td>
-            <td>{acceleration.y.toFixed(2)}</td>
-            <td>{acceleration.z.toFixed(2)}</td>
-            <td>
-              {Math.sqrt(
-                acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2
-              ).toFixed(2)}
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <strong>Acc (Gravity)</strong>
-            </td>
-            <td>{accelerationIncludingGravity.x.toFixed(2)}</td>
-            <td>{accelerationIncludingGravity.y.toFixed(2)}</td>
-            <td>{accelerationIncludingGravity.z.toFixed(2)}</td>
-            <td>
-              {Math.sqrt(
-                accelerationIncludingGravity.x ** 2 +
-                  accelerationIncludingGravity.y ** 2 +
-                  accelerationIncludingGravity.z ** 2
-              ).toFixed(2)}
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <strong>Rotation Rate</strong>
-            </td>
-            <td>{rotationRate.alpha.toFixed(2)}</td>
-            <td>{rotationRate.beta.toFixed(2)}</td>
-            <td>{rotationRate.gamma.toFixed(2)}</td>
-            <td>
-              {Math.sqrt(
-                rotationRate.alpha ** 2 +
-                  rotationRate.beta ** 2 +
-                  rotationRate.gamma ** 2
-              ).toFixed(2)}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="grid-container">
+      <div className="grid-header">
+        <div></div>
+        <div>x</div>
+        <div>y</div>
+        <div>z</div>
+        <div>abs</div>
+      </div>
+      <div className="grid-body">
+        <div className="grid-row">
+          <div><strong>Acc</strong></div>
+          <div>{acceleration.x.toFixed(2)}</div>
+          <div>{acceleration.y.toFixed(2)}</div>
+          <div>{acceleration.z.toFixed(2)}</div>
+          <div>{Math.sqrt(acceleration.x ** 2 + acceleration.y ** 2 + acceleration.z ** 2).toFixed(2)}</div>
+        </div>
+        <div className="grid-row">
+          <div><strong>Acc (Gravity)</strong></div>
+          <div>{accelerationIncludingGravity.x.toFixed(2)}</div>
+          <div>{accelerationIncludingGravity.y.toFixed(2)}</div>
+          <div>{accelerationIncludingGravity.z.toFixed(2)}</div>
+          <div>{Math.sqrt(accelerationIncludingGravity.x ** 2 + accelerationIncludingGravity.y ** 2 + accelerationIncludingGravity.z ** 2).toFixed(2)}</div>
+        </div>
+        <div className="grid-row">
+          <div><strong>Rotation Rate</strong></div>
+          <div>{rotationRate.alpha.toFixed(2)}</div>
+          <div>{rotationRate.beta.toFixed(2)}</div>
+          <div>{rotationRate.gamma.toFixed(2)}</div>
+          <div>{Math.sqrt(rotationRate.alpha ** 2 + rotationRate.beta ** 2 + rotationRate.gamma ** 2).toFixed(2)}</div>
+        </div>
+      </div>
+    </div>
       <p>
         <strong>Interval:</strong> {interval} ms
       </p>

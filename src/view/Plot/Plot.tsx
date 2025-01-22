@@ -32,7 +32,7 @@ export const Plot: FC<{
   };
 
   return (
-    <div>
+    <div style={{ width: "100%" }}>
       <Line
         data={data}
         options={{
