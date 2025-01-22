@@ -28,11 +28,7 @@ export const useDeviceMotion = () => {
   });
   const [interval, setIntervalValue] = useState<number>(0);
 
-  /**
-   * iOS(Safari)などで必要となる許可をリクエストする関数
-   */
   const requestPermission = useCallback(async () => {
-    // iOS Safari などでは DeviceMotionEvent.requestPermission が存在する場合がある
     if (
       typeof DeviceMotionEvent !== "undefined" &&
       "requestPermission" in DeviceMotionEvent
@@ -49,13 +45,11 @@ export const useDeviceMotion = () => {
         console.error("DeviceMotion permission request error:", error);
       }
     } else {
-      // iOS Safari 以外の環境では許可が不要なケースもある
       setPermissionGranted(true);
     }
   }, []);
 
   useEffect(() => {
-    // ユーザーが許可しないとイベントリスナーを登録しないようにする
     if (!permissionGranted) return;
 
     const handleDeviceMotion = (event: DeviceMotionEvent) => {
@@ -90,8 +84,8 @@ export const useDeviceMotion = () => {
   }, [permissionGranted]);
 
   return {
-    permissionGranted, 
-    requestPermission, 
+    permissionGranted,
+    requestPermission,
     acceleration,
     accelerationIncludingGravity,
     rotationRate,
