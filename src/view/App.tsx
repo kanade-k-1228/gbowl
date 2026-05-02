@@ -1,22 +1,22 @@
 import clsx from "clsx";
-import { useAtom, useAtomValue } from "jotai";
-import { Pause, Play, RotateCcw } from "lucide-react";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { Pause, Play, RotateCcw, Settings as SettingsIcon } from "lucide-react";
 import type { FC } from "react";
 import { useDeviceMotion } from "../hook/useDeviceMotion";
-import { useGeolocation } from "../hook/useGeolocation";
 import { useSound } from "../hook/useSound";
 import { deviceMotionState } from "../state/sensor";
 import { soundToggleState } from "../state/sound";
+import { settingsOpenState } from "../state/ui";
 import { Bowl } from "./Bowl";
 import { Plot } from "./Plot";
-import { Table } from "./Table";
+import { Settings } from "./Settings";
 
 export const App: FC = () => {
   useDeviceMotion();
-  useGeolocation();
   const { start, stop } = useSound();
   const device = useAtomValue(deviceMotionState);
   const [running, setRunning] = useAtom(soundToggleState);
+  const setSettingsOpen = useSetAtom(settingsOpenState);
 
   const hz = device.interval ? 1 / device.interval : 0;
   const accMag = Math.hypot(
@@ -57,6 +57,14 @@ export const App: FC = () => {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => setSettingsOpen(true)}
+            aria-label="Settings"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-neutral-300 ring-1 ring-white/10 transition hover:bg-white/10 active:scale-95"
+          >
+            <SettingsIcon className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
             aria-label="Calibrate"
             className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-neutral-300 ring-1 ring-white/10 transition hover:bg-white/10 active:scale-95"
           >
@@ -82,7 +90,7 @@ export const App: FC = () => {
         </div>
       </header>
 
-      <main className="grid grid-rows-[1fr_auto_minmax(120px,28%)] gap-3 overflow-hidden pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pl-[max(env(safe-area-inset-left),0.75rem)] pr-[max(env(safe-area-inset-right),0.75rem)]">
+      <main className="grid grid-rows-[1fr_minmax(120px,28%)] gap-3 overflow-hidden pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pl-[max(env(safe-area-inset-left),0.75rem)] pr-[max(env(safe-area-inset-right),0.75rem)]">
         <section className="relative flex items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-bg-elevated to-bg-panel ring-1 ring-white/5">
           <Bowl />
           <div className="pointer-events-none absolute top-4 right-4 flex flex-col items-end gap-0.5">
@@ -98,14 +106,11 @@ export const App: FC = () => {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-bg-elevated/70 p-3 ring-1 ring-white/5">
-          <Table />
-        </section>
-
         <section className="overflow-hidden rounded-2xl bg-bg-elevated/70 p-2 ring-1 ring-white/5">
           <Plot />
         </section>
       </main>
+      <Settings />
     </div>
   );
 };

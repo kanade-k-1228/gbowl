@@ -1,17 +1,7 @@
 import { atom, type Getter, type Setter } from "jotai";
-import type { DeviceMotion, Geolocation } from "../type/type";
+import type { DeviceMotion } from "../type/type";
 import { stepBowlSimulation } from "./bowl";
-import {
-  stepCalibrationFromGps,
-  stepCalibrationFromImu,
-  stepFilterCorrect,
-  stepFilterPredict,
-} from "./fusion";
-
-// ============================================================
-// Raw sensor atoms (writable wrappers — hooks call setAtom on these).
-// Write fn drives the fusion pipeline in fusion.ts.
-// ============================================================
+import { stepCalibrationFromImu } from "./fusion";
 
 const deviceMotionRaw = atom<DeviceMotion>({
   acceleration: { x: 0, y: 0, z: 0 },
@@ -25,26 +15,10 @@ export const deviceMotionState = atom(
   (get, set, motion: DeviceMotion) => {
     set(deviceMotionRaw, motion);
     stepCalibrationFromImu(get, set, motion);
-    stepFilterPredict(get, set, motion);
     stepBowlSimulation(get, set, motion);
     stepRecordSeries(get, set, motion);
   }
 );
-
-const geolocationRaw = atom<Geolocation | null>(null);
-
-export const geolocationState = atom(
-  (get) => get(geolocationRaw),
-  (get, set, geo: Geolocation) => {
-    set(geolocationRaw, geo);
-    stepCalibrationFromGps(get, set, geo);
-    stepFilterCorrect(get, set, geo);
-  }
-);
-
-// ============================================================
-// Time-series buffers (raw sensor history for plotting)
-// ============================================================
 
 export const SERIES_WINDOW = 50;
 
