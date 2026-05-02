@@ -8,7 +8,7 @@ import {
 import { useAtomValue } from "jotai";
 import type { FC } from "react";
 import { Line } from "react-chartjs-2";
-import { accSeriesState, gyroSeriesState } from "../../state/state";
+import { accSeriesState, gyroSeriesState } from "../../state/sensor";
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 

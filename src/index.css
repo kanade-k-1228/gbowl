@@ -15,8 +15,17 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  html,
+  body,
   #root {
-    @apply h-screen w-screen;
+    height: 100%;
+    width: 100%;
+    overscroll-behavior: none;
+  }
+
+  #root {
+    height: 100dvh;
+    width: 100dvw;
   }
 
   ::-webkit-scrollbar {

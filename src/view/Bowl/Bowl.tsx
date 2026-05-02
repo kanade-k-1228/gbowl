@@ -1,16 +1,14 @@
 import { useAtomValue } from "jotai";
 import type { FC } from "react";
-import { deviceMotionState } from "../../state/state";
+import { bowlState } from "../../state/bowl";
 
 const RINGS = [0.25, 0.5, 0.75, 1.0];
 
 export const Bowl: FC = () => {
-  const { acceleration } = useAtomValue(deviceMotionState);
-  const max = 1;
-  const scale = 100 / max;
-  const x = Math.max(-100, Math.min(100, acceleration.x * scale));
-  const y = Math.max(-100, Math.min(100, acceleration.y * scale));
-  const mag = Math.min(1, Math.hypot(acceleration.x, acceleration.y) / max);
+  const ball = useAtomValue(bowlState);
+  const x = ball.x * 100;
+  const y = ball.y * 100;
+  const mag = Math.min(1, Math.hypot(ball.x, ball.y));
   const dotColor = mag < 0.4 ? "#22d3ee" : mag < 0.75 ? "#f59e0b" : "#f43f5e";
 
   return (
