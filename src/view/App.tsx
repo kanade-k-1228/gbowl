@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { Pause, Play, RotateCcw, Settings as SettingsIcon } from "lucide-react";
+import { Pause, Play, Settings as SettingsIcon } from "lucide-react";
 import type { FC } from "react";
 import { useDeviceMotion } from "../hook/useDeviceMotion";
 import { useSound } from "../hook/useSound";
@@ -57,13 +57,6 @@ export const App: FC = () => {
             className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-neutral-300 ring-1 ring-white/10 transition hover:bg-white/10 active:scale-95"
           >
             <SettingsIcon className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            aria-label="Calibrate"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-neutral-300 ring-1 ring-white/10 transition hover:bg-white/10 active:scale-95"
-          >
-            <RotateCcw className="h-5 w-5" />
           </button>
           <button
             type="button"

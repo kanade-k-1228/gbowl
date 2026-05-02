@@ -1,15 +1,27 @@
 import { useAtomValue } from "jotai";
 import type { FC } from "react";
 import { bowlState } from "../state/bowl";
+import { forwardDevState, gravityDevState } from "../state/fusion";
 
 const RINGS = [0.25, 0.5, 0.75, 1.0];
+const G = 9.8;
+const R = 100;
 
 export const Bowl: FC = () => {
   const ball = useAtomValue(bowlState);
-  const x = ball.x * 100;
-  const y = ball.y * 100;
+  const gravity = useAtomValue(gravityDevState);
+  const forward = useAtomValue(forwardDevState);
+  const x = ball.x * R;
+  const y = ball.y * R;
   const mag = Math.min(1, Math.hypot(ball.x, ball.y));
   const dotColor = mag < 0.4 ? "#22d3ee" : mag < 0.75 ? "#f59e0b" : "#f43f5e";
+
+  // Project device-frame vectors onto screen plane (device x = screen right,
+  // device y = screen up; SVG y is flipped). Gravity normalized by |g|.
+  const gx = (gravity[0] / G) * R;
+  const gy = -(gravity[1] / G) * R;
+  const fx = forward[0] * R;
+  const fy = -forward[1] * R;
 
   return (
     <svg
@@ -75,25 +87,26 @@ export const Bowl: FC = () => {
         strokeWidth="1"
       />
 
-      <g
-        fill="rgba(255,255,255,0.55)"
-        fontSize="9"
-        fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
-        textAnchor="middle"
-      >
-        <text x="0" y="-108">
-          F
-        </text>
-        <text x="0" y="115">
-          B
-        </text>
-        <text x="-110" y="-7" textAnchor="end">
-          L
-        </text>
-        <text x="110" y="-7" textAnchor="start">
-          R
-        </text>
-      </g>
+      <line
+        x1="0"
+        y1="0"
+        x2={gx}
+        y2={gy}
+        stroke="#fbbf24"
+        strokeOpacity="0.7"
+        strokeWidth="0.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="0"
+        y1="0"
+        x2={fx}
+        y2={fy}
+        stroke="#22d3ee"
+        strokeOpacity="0.7"
+        strokeWidth="0.5"
+        strokeLinecap="round"
+      />
 
       <circle cx={x} cy={y} r="20" fill="url(#dotGlow)" />
       <circle

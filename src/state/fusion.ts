@@ -12,7 +12,7 @@ const FORWARD_TAU = 60; // s
 
 // gravity in device frame, taken instantaneously from accIG − acc.
 // (DeviceMotionEvent: accelerationIncludingGravity = acceleration + gravity.)
-const gravityDevState = atom<V3>([0, 0, 9.8]);
+export const gravityDevState = atom<V3>([0, 0, 9.8]);
 
 // 3x3 EMA covariance of horizontal acceleration (device frame).
 const horizCovState = atom<M3>([
@@ -22,7 +22,7 @@ const horizCovState = atom<M3>([
 ]);
 
 // Forward unit vector in device frame.
-const forwardDevState = atom<V3>([0, 1, 0]);
+export const forwardDevState = atom<V3>([0, 1, 0]);
 
 export const stepCalibrationFromImu = (
   get: Getter,
