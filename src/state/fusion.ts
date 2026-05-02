@@ -5,9 +5,9 @@ import { deviceMotionState } from "./sensor";
 type V3 = [number, number, number];
 type M3 = [V3, V3, V3];
 
-// Long-term Kalman-like estimator for the forward axis. With no GPS we cannot
-// resolve the +/- sign; we just track the dominant axis of horizontal
-// acceleration via EMA covariance + 1 power-iteration step per frame.
+// Long-term estimator for the forward axis. With no GPS we cannot resolve the
+// +/- sign; we just track the dominant axis of horizontal acceleration via EMA
+// covariance + closed-form 2×2 eigendecomposition in the horizontal plane.
 const FORWARD_TAU = 60; // s
 
 // gravity in device frame, taken instantaneously from accIG − acc.
@@ -62,30 +62,71 @@ export const stepCalibrationFromImu = (
   ];
   set(horizCovState, newC);
 
-  // 4. One power-iteration step toward the leading eigenvector of C, then
-  //    project onto the horizontal plane and renormalize. This is the recursive
-  //    long-term forward-axis estimate.
+  // 4. Leading eigenvector of C in the horizontal plane (⊥ u). Build an
+  //    orthonormal basis (e1, e2) of that plane, project C into 2D, and solve
+  //    the 2×2 eigenproblem in closed form. Avoids the power-iteration failure
+  //    mode where the previous f happens to be orthogonal to the leading
+  //    eigenvector (e.g., vertical phone mount with car's forward axis along
+  //    device Z — there f stays stuck at the initial guess).
+  const aux: V3 = Math.abs(u[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+  const e1raw: V3 = [
+    u[1] * aux[2] - u[2] * aux[1],
+    u[2] * aux[0] - u[0] * aux[2],
+    u[0] * aux[1] - u[1] * aux[0],
+  ];
+  const e1n = Math.hypot(e1raw[0], e1raw[1], e1raw[2]);
+  if (e1n < 1e-6) return;
+  const e1: V3 = [e1raw[0] / e1n, e1raw[1] / e1n, e1raw[2] / e1n];
+  const e2: V3 = [
+    u[1] * e1[2] - u[2] * e1[1],
+    u[2] * e1[0] - u[0] * e1[2],
+    u[0] * e1[1] - u[1] * e1[0],
+  ];
+
+  const Ce1: V3 = [
+    C00 * e1[0] + C01 * e1[1] + C02 * e1[2],
+    C01 * e1[0] + C11 * e1[1] + C12 * e1[2],
+    C02 * e1[0] + C12 * e1[1] + C22 * e1[2],
+  ];
+  const Ce2: V3 = [
+    C00 * e2[0] + C01 * e2[1] + C02 * e2[2],
+    C01 * e2[0] + C11 * e2[1] + C12 * e2[2],
+    C02 * e2[0] + C12 * e2[1] + C22 * e2[2],
+  ];
+  const A = e1[0] * Ce1[0] + e1[1] * Ce1[1] + e1[2] * Ce1[2];
+  const B = e1[0] * Ce2[0] + e1[1] * Ce2[1] + e1[2] * Ce2[2];
+  const D = e2[0] * Ce2[0] + e2[1] * Ce2[1] + e2[2] * Ce2[2];
+
+  if (A + D < 1e-9) return; // No horizontal accel signal yet.
+
+  const trace = A + D;
+  const disc = Math.sqrt((A - D) * (A - D) + 4 * B * B);
+  const lambda = (trace + disc) / 2;
+  let v1: number;
+  let v2: number;
+  if (Math.abs(B) > 1e-9) {
+    v1 = lambda - D;
+    v2 = B;
+  } else {
+    v1 = A >= D ? 1 : 0;
+    v2 = A >= D ? 0 : 1;
+  }
+  const vn = Math.hypot(v1, v2);
+  v1 /= vn;
+  v2 /= vn;
+
+  let nfx = v1 * e1[0] + v2 * e2[0];
+  let nfy = v1 * e1[1] + v2 * e2[1];
+  let nfz = v1 * e1[2] + v2 * e2[2];
+
+  // Keep sign continuous with previous estimate to avoid 180° flips.
   const f = get(forwardDevState);
-  const Cf: V3 = [
-    C00 * f[0] + C01 * f[1] + C02 * f[2],
-    C01 * f[0] + C11 * f[1] + C12 * f[2],
-    C02 * f[0] + C12 * f[1] + C22 * f[2],
-  ];
-  const CfDotU = Cf[0] * u[0] + Cf[1] * u[1] + Cf[2] * u[2];
-  const Cfh: V3 = [
-    Cf[0] - CfDotU * u[0],
-    Cf[1] - CfDotU * u[1],
-    Cf[2] - CfDotU * u[2],
-  ];
-  const cn = Math.hypot(Cfh[0], Cfh[1], Cfh[2]);
-  if (cn < 1e-6) return;
-  // Keep sign continuous to avoid 180° flips between frames.
-  const sign = Cfh[0] * f[0] + Cfh[1] * f[1] + Cfh[2] * f[2] >= 0 ? 1 : -1;
-  set(forwardDevState, [
-    (sign * Cfh[0]) / cn,
-    (sign * Cfh[1]) / cn,
-    (sign * Cfh[2]) / cn,
-  ]);
+  if (nfx * f[0] + nfy * f[1] + nfz * f[2] < 0) {
+    nfx = -nfx;
+    nfy = -nfy;
+    nfz = -nfz;
+  }
+  set(forwardDevState, [nfx, nfy, nfz]);
 };
 
 const identity = (): M3 => [

@@ -1,27 +1,31 @@
 import { useAtomValue } from "jotai";
 import type { FC } from "react";
 import { bowlState } from "../state/bowl";
-import { forwardDevState, gravityDevState } from "../state/fusion";
+import { matrixState } from "../state/fusion";
 
 const RINGS = [0.25, 0.5, 0.75, 1.0];
-const G = 9.8;
 const R = 100;
 
 export const Bowl: FC = () => {
   const ball = useAtomValue(bowlState);
-  const gravity = useAtomValue(gravityDevState);
-  const forward = useAtomValue(forwardDevState);
+  const M = useAtomValue(matrixState);
   const x = ball.x * R;
   const y = ball.y * R;
   const mag = Math.min(1, Math.hypot(ball.x, ball.y));
   const dotColor = mag < 0.4 ? "#22d3ee" : mag < 0.75 ? "#f59e0b" : "#f43f5e";
 
-  // Project device-frame vectors onto screen plane (device x = screen right,
-  // device y = screen up; SVG y is flipped). Gravity normalized by |g|.
-  const gx = (gravity[0] / G) * R;
-  const gy = -(gravity[1] / G) * R;
+  // matrixState rows are [right, forward, up] expressed in device frame
+  // (orthonormal). Project each onto the screen plane: device +x → SVG +x,
+  // device +y → SVG -y (SVG y is flipped). Z component is dropped.
+  const right = M[0];
+  const forward = M[1];
+  const up = M[2];
+  const rx = right[0] * R;
+  const ry = -right[1] * R;
   const fx = forward[0] * R;
   const fy = -forward[1] * R;
+  const ux = up[0] * R;
+  const uy = -up[1] * R;
 
   return (
     <svg
@@ -90,9 +94,9 @@ export const Bowl: FC = () => {
       <line
         x1="0"
         y1="0"
-        x2={gx}
-        y2={gy}
-        stroke="#fbbf24"
+        x2={rx}
+        y2={ry}
+        stroke="#f43f5e"
         strokeOpacity="0.7"
         strokeWidth="0.5"
         strokeLinecap="round"
@@ -103,6 +107,16 @@ export const Bowl: FC = () => {
         x2={fx}
         y2={fy}
         stroke="#22d3ee"
+        strokeOpacity="0.7"
+        strokeWidth="0.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="0"
+        y1="0"
+        x2={ux}
+        y2={uy}
+        stroke="#fbbf24"
         strokeOpacity="0.7"
         strokeWidth="0.5"
         strokeLinecap="round"
