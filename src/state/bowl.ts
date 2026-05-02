@@ -1,4 +1,5 @@
 import { atom, type Getter, type Setter } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 import type { DeviceMotion } from "../type/type";
 import { matrixState } from "./fusion";
 
@@ -15,8 +16,8 @@ const G = 9.8;
 // Tunable from the Settings dialog.
 // "Stiffness" is the natural angular frequency ω (rad/s) — higher = ball snaps
 // back faster. "Damping" is ζ (dimensionless) — higher = less oscillation.
-export const bowlStiffnessState = atom(10);
-export const bowlDampingState = atom(0.9);
+export const bowlStiffnessState = atomWithStorage("gbowl.bowl.stiffness", 10);
+export const bowlDampingState = atomWithStorage("gbowl.bowl.damping", 0.9);
 
 type Vec2 = { x: number; y: number };
 

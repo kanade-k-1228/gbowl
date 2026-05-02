@@ -13,7 +13,7 @@ export const Bowl: FC = () => {
 
   return (
     <svg
-      viewBox="-110 -110 220 220"
+      viewBox="-118 -118 236 236"
       className="h-full w-full max-h-[min(80vw,560px)] max-w-[min(80vw,560px)]"
       preserveAspectRatio="xMidYMid meet"
       role="img"
@@ -74,6 +74,26 @@ export const Bowl: FC = () => {
         stroke="rgba(255,255,255,0.05)"
         strokeWidth="1"
       />
+
+      <g
+        fill="rgba(255,255,255,0.55)"
+        fontSize="9"
+        fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+        textAnchor="middle"
+      >
+        <text x="0" y="-108">
+          F
+        </text>
+        <text x="0" y="115">
+          B
+        </text>
+        <text x="-110" y="-7" textAnchor="end">
+          L
+        </text>
+        <text x="110" y="-7" textAnchor="start">
+          R
+        </text>
+      </g>
 
       <circle cx={x} cy={y} r="20" fill="url(#dotGlow)" />
       <circle

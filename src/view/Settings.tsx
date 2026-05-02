@@ -1,5 +1,6 @@
-import { useAtom } from "jotai";
-import { X } from "lucide-react";
+import { useAtom, useSetAtom } from "jotai";
+import { RESET } from "jotai/utils";
+import { RotateCcw, X } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { bowlDampingState, bowlStiffnessState } from "../state/bowl";
 import {
@@ -52,7 +53,33 @@ export const Settings: FC = () => {
         <FreqBaseSlider />
         <FreqRangeSlider />
       </Section>
+
+      <ResetButton />
     </dialog>
+  );
+};
+
+const ResetButton: FC = () => {
+  const resetStiffness = useSetAtom(bowlStiffnessState);
+  const resetDamping = useSetAtom(bowlDampingState);
+  const resetVolume = useSetAtom(soundVolumeState);
+  const resetFreqBase = useSetAtom(soundFreqBaseState);
+  const resetFreqRange = useSetAtom(soundFreqRangeState);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        resetStiffness(RESET);
+        resetDamping(RESET);
+        resetVolume(RESET);
+        resetFreqBase(RESET);
+        resetFreqRange(RESET);
+      }}
+      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-white/[0.04] px-4 py-3 text-neutral-300 ring-1 ring-white/5 transition hover:bg-white/[0.08] active:scale-[0.98]"
+    >
+      <RotateCcw className="h-4 w-4" />
+      <span className="font-medium text-sm">Reset to defaults</span>
+    </button>
   );
 };
 
@@ -84,39 +111,27 @@ const Slider: FC<{
   max: number;
   step: number;
   unit?: string;
-  scale?: "linear" | "log";
   onChange: (v: number) => void;
-}> = ({ label, value, min, max, step, unit, scale = "linear", onChange }) => {
-  const isLog = scale === "log";
-  const sliderMin = isLog ? Math.log(min) : min;
-  const sliderMax = isLog ? Math.log(max) : max;
-  const sliderValue = isLog ? Math.log(value) : value;
-  const sliderStep = isLog ? (sliderMax - sliderMin) / 200 : step;
-
-  return (
-    <label className="block">
-      <div className="mb-1 flex items-baseline justify-between text-neutral-300 text-xs">
-        <span>{label}</span>
-        <span className="num font-mono text-neutral-100">
-          {formatValue(value)}
-          {unit ? <span className="ml-1 text-neutral-500">{unit}</span> : null}
-        </span>
-      </div>
-      <input
-        type="range"
-        value={sliderValue}
-        min={sliderMin}
-        max={sliderMax}
-        step={sliderStep}
-        onChange={(e) => {
-          const raw = Number(e.target.value);
-          onChange(isLog ? Math.exp(raw) : raw);
-        }}
-        className="w-full accent-accent"
-      />
-    </label>
-  );
-};
+}> = ({ label, value, min, max, step, unit, onChange }) => (
+  <label className="block">
+    <div className="mb-1 flex items-baseline justify-between text-neutral-300 text-xs">
+      <span>{label}</span>
+      <span className="num font-mono text-neutral-100">
+        {formatValue(value)}
+        {unit ? <span className="ml-1 text-neutral-500">{unit}</span> : null}
+      </span>
+    </div>
+    <input
+      type="range"
+      value={value}
+      min={min}
+      max={max}
+      step={step}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="w-full accent-accent"
+    />
+  </label>
+);
 
 const BowlStiffnessSlider: FC = () => {
   const [v, setV] = useAtom(bowlStiffnessState);
@@ -124,10 +139,9 @@ const BowlStiffnessSlider: FC = () => {
     <Slider
       label="Stiffness"
       value={v}
-      min={0.001}
+      min={0}
       max={100}
-      step={0.001}
-      scale="log"
+      step={1}
       onChange={setV}
     />
   );
@@ -139,10 +153,9 @@ const BowlDampingSlider: FC = () => {
     <Slider
       label="Damping"
       value={v}
-      min={0.0001}
+      min={0}
       max={10}
-      step={0.0001}
-      scale="log"
+      step={0.1}
       onChange={setV}
     />
   );

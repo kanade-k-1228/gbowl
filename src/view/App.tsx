@@ -19,11 +19,6 @@ export const App: FC = () => {
   const setSettingsOpen = useSetAtom(settingsOpenState);
 
   const hz = device.interval ? 1000 / device.interval : 0;
-  const accMag = Math.hypot(
-    device.acceleration.x,
-    device.acceleration.y,
-    device.acceleration.z
-  );
 
   const onToggle = () => {
     if (running) {
@@ -93,17 +88,6 @@ export const App: FC = () => {
       <main className="grid grid-rows-[1fr_minmax(120px,28%)] gap-3 overflow-hidden pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pl-[max(env(safe-area-inset-left),0.75rem)] pr-[max(env(safe-area-inset-right),0.75rem)]">
         <section className="relative flex items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-bg-elevated to-bg-panel ring-1 ring-white/5">
           <Bowl />
-          <div className="pointer-events-none absolute top-4 right-4 flex flex-col items-end gap-0.5">
-            <span className="text-[10px] text-neutral-500 uppercase tracking-widest">
-              |a|
-            </span>
-            <span className="num font-bold text-2xl text-neutral-100">
-              {accMag.toFixed(2)}
-              <span className="ml-1 font-normal text-neutral-500 text-sm">
-                G
-              </span>
-            </span>
-          </div>
         </section>
 
         <section className="overflow-hidden rounded-2xl bg-bg-elevated/70 p-2 ring-1 ring-white/5">
