@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useAtom, useAtomValue } from "jotai";
 import { Pause, Play, RotateCcw } from "lucide-react";
 import type { FC } from "react";
@@ -6,9 +7,9 @@ import { useGeolocation } from "../hook/useGeolocation";
 import { useSound } from "../hook/useSound";
 import { deviceMotionState } from "../state/sensor";
 import { soundToggleState } from "../state/sound";
-import { Bowl } from "./Bowl/Bowl";
-import { Plot } from "./Plot/Plot";
-import { Table } from "./Table/Table";
+import { Bowl } from "./Bowl";
+import { Plot } from "./Plot";
+import { Table } from "./Table";
 
 export const App: FC = () => {
   useDeviceMotion();
@@ -39,13 +40,14 @@ export const App: FC = () => {
       <header className="flex items-center justify-between gap-3 border-white/5 border-b bg-bg-elevated/40 backdrop-blur pl-[max(env(safe-area-inset-left),1.25rem)] pr-[max(env(safe-area-inset-right),1.25rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3">
         <div className="flex items-baseline gap-3">
           <span className="bg-gradient-to-br from-accent via-cyan-200 to-cyan-400 bg-clip-text font-display font-extrabold text-2xl text-transparent tracking-tight">
-            G-MONI
+            G-Monitor
           </span>
           <div className="flex items-center gap-1.5">
             <span
-              className={`h-1.5 w-1.5 rounded-full ${
+              className={clsx(
+                "h-1.5 w-1.5 rounded-full",
                 running ? "animate-pulse bg-accent" : "bg-neutral-600"
-              }`}
+              )}
             />
             <span className="num text-[11px] text-neutral-400 uppercase tracking-wider">
               {hz > 0 ? `${hz.toFixed(0)} Hz` : "idle"}
@@ -64,11 +66,12 @@ export const App: FC = () => {
             type="button"
             onClick={onToggle}
             aria-label={running ? "Stop" : "Start"}
-            className={`flex h-11 w-11 items-center justify-center rounded-full transition-all duration-200 active:scale-95 ${
+            className={clsx(
+              "flex h-11 w-11 items-center justify-center rounded-full transition-all duration-200 active:scale-95",
               running
                 ? "bg-accent-danger text-white shadow-glow-warm"
                 : "bg-accent text-bg shadow-glow"
-            }`}
+            )}
           >
             {running ? (
               <Pause className="h-5 w-5" fill="currentColor" />

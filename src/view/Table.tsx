@@ -1,6 +1,6 @@
 import { useAtomValue } from "jotai";
 import type { FC } from "react";
-import { deviceMotionState } from "../../state/sensor";
+import { deviceMotionState } from "../state/sensor";
 
 const fmt = (n: number) => {
   const s = n.toFixed(2);

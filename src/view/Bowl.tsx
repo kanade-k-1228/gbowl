@@ -1,6 +1,6 @@
 import { useAtomValue } from "jotai";
 import type { FC } from "react";
-import { bowlState } from "../../state/bowl";
+import { bowlState } from "../state/bowl";
 
 const RINGS = [0.25, 0.5, 0.75, 1.0];
 
