@@ -18,7 +18,7 @@ export const App: FC = () => {
   const [running, setRunning] = useAtom(soundToggleState);
   const setSettingsOpen = useSetAtom(settingsOpenState);
 
-  const hz = device.interval ? 1 / device.interval : 0;
+  const hz = device.interval ? 1000 / device.interval : 0;
   const accMag = Math.hypot(
     device.acceleration.x,
     device.acceleration.y,
@@ -46,7 +46,7 @@ export const App: FC = () => {
             <span
               className={clsx(
                 "h-1.5 w-1.5 rounded-full",
-                running ? "animate-pulse bg-accent" : "bg-neutral-600"
+                hz > 0 ? "animate-pulse bg-accent" : "bg-neutral-600"
               )}
             />
             <span className="num text-[11px] text-neutral-400 uppercase tracking-wider">
