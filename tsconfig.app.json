@@ -20,9 +20,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-
-    "rootDirs": ["src", "css/src"]
+    "noUncheckedSideEffectImports": true
   },
   "include": ["src"]
 }

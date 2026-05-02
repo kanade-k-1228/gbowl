@@ -1,16 +1,93 @@
-import { FC } from "react";
+import { useAtomValue } from "jotai";
+import type { FC } from "react";
+import { deviceMotionState } from "../../state/state";
 
-export const Bowl: FC<{ acc: { x: number; y: number; z: number } }> = ({
-  acc,
-}) => {
-  const scale = 100;
+const RINGS = [0.25, 0.5, 0.75, 1.0];
+
+export const Bowl: FC = () => {
+  const { acceleration } = useAtomValue(deviceMotionState);
+  const max = 1;
+  const scale = 100 / max;
+  const x = Math.max(-100, Math.min(100, acceleration.x * scale));
+  const y = Math.max(-100, Math.min(100, acceleration.y * scale));
+  const mag = Math.min(1, Math.hypot(acceleration.x, acceleration.y) / max);
+  const dotColor = mag < 0.4 ? "#22d3ee" : mag < 0.75 ? "#f59e0b" : "#f43f5e";
+
   return (
-    <svg width="100" height="100" viewBox="-100 -100 200 200">
-      <circle cx={acc.x * scale} cy={acc.y * scale} r="5" fill="blue" />
-      <circle cx="0" cy="0" r="25" stroke="gray" fill="none" />
-      <circle cx="0" cy="0" r="50" stroke="gray" fill="none" />
-      <circle cx="0" cy="0" r="75" stroke="gray" fill="none" />
-      <circle cx="0" cy="0" r="100" stroke="gray" fill="none" />
+    <svg
+      viewBox="-110 -110 220 220"
+      className="h-full w-full max-h-[min(80vw,560px)] max-w-[min(80vw,560px)]"
+      preserveAspectRatio="xMidYMid meet"
+      role="img"
+      aria-label="G force bowl"
+    >
+      <title>G force bowl</title>
+      <defs>
+        <radialGradient id="bowlBg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#1a1c23" />
+          <stop offset="100%" stopColor="#0a0a0c" />
+        </radialGradient>
+        <radialGradient id="dotGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={dotColor} stopOpacity="0.8" />
+          <stop offset="100%" stopColor={dotColor} stopOpacity="0" />
+        </radialGradient>
+        <filter id="dotShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
+        </filter>
+      </defs>
+
+      <circle cx="0" cy="0" r="105" fill="url(#bowlBg)" />
+
+      {RINGS.map((r) => (
+        <g key={r}>
+          <circle
+            cx="0"
+            cy="0"
+            r={r * 100}
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth="1"
+            fill="none"
+          />
+          <text
+            x={r * 100 + 4}
+            y="3"
+            fill="rgba(255,255,255,0.25)"
+            fontSize="7"
+            fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+          >
+            {r.toFixed(2)}G
+          </text>
+        </g>
+      ))}
+
+      <line
+        x1="-100"
+        y1="0"
+        x2="100"
+        y2="0"
+        stroke="rgba(255,255,255,0.05)"
+        strokeWidth="1"
+      />
+      <line
+        x1="0"
+        y1="-100"
+        x2="0"
+        y2="100"
+        stroke="rgba(255,255,255,0.05)"
+        strokeWidth="1"
+      />
+
+      <circle cx={x} cy={y} r="20" fill="url(#dotGlow)" />
+      <circle
+        cx={x}
+        cy={y}
+        r="6"
+        fill={dotColor}
+        filter="url(#dotShadow)"
+        opacity="0.5"
+      />
+      <circle cx={x} cy={y} r="5" fill={dotColor} />
+      <circle cx={x} cy={y} r="2" fill="white" />
     </svg>
   );
 };

@@ -1,6 +1,9 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useAtomValue } from "jotai";
+import { useCallback, useEffect, useRef } from "react";
+import { soundFreqState } from "../state/state";
 
-export const useSound = (freq: number, volume: number) => {
+export const useSound = (volume: number) => {
+  const freq = useAtomValue(soundFreqState);
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
@@ -33,8 +36,12 @@ export const useSound = (freq: number, volume: number) => {
   }, []);
 
   useEffect(() => {
-    if (oscillatorRef.current && gainNodeRef.current) {
-      const now = audioContextRef.current!.currentTime;
+    if (
+      oscillatorRef.current &&
+      gainNodeRef.current &&
+      audioContextRef.current
+    ) {
+      const now = audioContextRef.current.currentTime;
       oscillatorRef.current.frequency.setValueAtTime(
         oscillatorRef.current.frequency.value,
         now

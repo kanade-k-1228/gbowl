@@ -1,5 +1,5 @@
 import { atom } from "jotai";
-import { DeviceMotion } from "../type/type";
+import type { DeviceMotion, FusedState, Geolocation } from "../type/type";
 
 export const deviceMotionState = atom<DeviceMotion>({
   acceleration: { x: 0, y: 0, z: 0 },
@@ -37,4 +37,33 @@ export const carState = atom<[number, number, number]>((get) => {
     ],
     matrix
   );
+});
+
+export const SERIES_WINDOW = 50;
+
+export const accSeriesState = atom<{ x: number[]; y: number[]; z: number[] }>({
+  x: [],
+  y: [],
+  z: [],
+});
+
+export const gyroSeriesState = atom<{
+  alpha: number[];
+  beta: number[];
+  gamma: number[];
+}>({ alpha: [], beta: [], gamma: [] });
+
+export const geolocationState = atom<Geolocation | null>(null);
+
+export const fusedState = atom<FusedState>({
+  heading: 0,
+  speed: 0,
+  position: null,
+  accuracy: Infinity,
+  hasGps: false,
+});
+
+export const soundFreqState = atom<number>((get) => {
+  const dm = get(deviceMotionState);
+  return 442 + dm.acceleration.x * 100;
 });
