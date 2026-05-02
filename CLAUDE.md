@@ -71,6 +71,13 @@ Lint・フォーマット・import 整理はすべて [Biome](https://biomejs.de
 - `vite.config.ts` の `base: "/gbowl/"` は GitHub Pages 配信パスに合わせてある。ローカルパスを書き換える場合は `package.json` の `homepage` も併せて変更。
 - `index.html` は `/manifest.json` を参照しているが、リポジトリ内には `manifest.json` を直接置かず `vite-plugin-pwa` 側で生成する設定を期待している。
 
+### GitHub Actions による自動デプロイ
+
+- `.github/workflows/deploy.yml`: `main` への push (および手動 `workflow_dispatch`) で起動。pnpm install → `pnpm run lint` → `pnpm run build` → `actions/upload-pages-artifact` → `actions/deploy-pages@v4` の流れ。
+- `.github/workflows/ci.yml`: PR 時に lint と build だけを回す軽量 CI。
+- 初回セットアップ時は **GitHub リポジトリの Settings → Pages → Build and deployment → Source を「GitHub Actions」に変更** する必要がある。`gh-pages` ブランチへの push ではなく、Pages の専用 artifact をデプロイする方式。
+- ローカル手動デプロイ (`pnpm run deploy`, `gh-pages` パッケージ経由) は緊急用に残しているが、通常は Actions に任せる。
+
 ## TypeScript 設定
 
 - `strict: true` に加えて `noUnusedLocals` / `noUnusedParameters` / `noFallthroughCasesInSwitch` / `noUncheckedSideEffectImports` を有効化。未使用変数は CI で落ちる。
