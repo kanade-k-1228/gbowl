@@ -31,18 +31,37 @@ export const useDeviceMotion = () => {
   }, [setMotion]);
 
   // iOS Safari requires DeviceMotionEvent.requestPermission() from a user
-  // gesture. Grab the first one anywhere on the page and request silently.
+  // gesture (click / touchend). pointerdown is not reliably accepted as
+  // transient activation, so we listen on both click and touchend and
+  // re-arm if the call rejects (e.g. denied) so a later tap can retry.
   useEffect(() => {
-    if (
-      typeof DeviceMotionEvent === "undefined" ||
-      !("requestPermission" in DeviceMotionEvent)
-    )
-      return;
-    const onGesture = () => {
-      // biome-ignore lint/suspicious/noExplicitAny: vendor-specific iOS API
-      (DeviceMotionEvent as any).requestPermission().catch(() => {});
+    type RequestFn = () => Promise<"granted" | "denied" | "default">;
+    const Ctor = DeviceMotionEvent as unknown as {
+      requestPermission?: RequestFn;
     };
-    window.addEventListener("pointerdown", onGesture, { once: true });
-    return () => window.removeEventListener("pointerdown", onGesture);
+    if (typeof Ctor.requestPermission !== "function") return;
+    const request: RequestFn = Ctor.requestPermission.bind(Ctor);
+
+    let pending = false;
+    const cleanup = () => {
+      window.removeEventListener("click", onGesture, true);
+      window.removeEventListener("touchend", onGesture, true);
+    };
+    function onGesture() {
+      if (pending) return;
+      pending = true;
+      request()
+        .then((state) => {
+          if (state === "granted") cleanup();
+          else pending = false;
+        })
+        .catch((err) => {
+          console.warn("[useDeviceMotion] requestPermission failed", err);
+          pending = false;
+        });
+    }
+    window.addEventListener("click", onGesture, true);
+    window.addEventListener("touchend", onGesture, true);
+    return cleanup;
   }, []);
 };
