@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 import type { FC } from "react";
 import { bowlState } from "../state/bowl";
-import { matrixState } from "../state/fusion";
+import { matrixState } from "../state/frame";
 
 const RINGS = [0.25, 0.5, 0.75, 1.0];
 const R = 100;

@@ -1,22 +1,35 @@
 import clsx from "clsx";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { Pause, Play, Settings as SettingsIcon } from "lucide-react";
+import { Crosshair, Pause, Play, Settings as SettingsIcon } from "lucide-react";
 import type { FC } from "react";
 import { useDeviceMotion } from "../hook/useDeviceMotion";
+import { useGeolocation } from "../hook/useGeolocation";
+import { usePermissions } from "../hook/usePermissions";
 import { useSound } from "../hook/useSound";
-import { deviceMotionState } from "../state/sensor";
+import {
+  calibrationModeState,
+  startCalibrationAction,
+  stopCalibrationAction,
+} from "../state/calibration";
+import { deviceMotionState } from "../state/motion";
 import { soundToggleState } from "../state/sound";
 import { settingsOpenState } from "../state/ui";
 import { Bowl } from "./Bowl";
+import { Calibration } from "./Calibration";
 import { Plot } from "./Plot";
 import { Settings } from "./Settings";
 
 export const App: FC = () => {
+  usePermissions();
   useDeviceMotion();
+  useGeolocation();
   const { start, stop } = useSound();
   const device = useAtomValue(deviceMotionState);
   const [running, setRunning] = useAtom(soundToggleState);
   const setSettingsOpen = useSetAtom(settingsOpenState);
+  const calibrating = useAtomValue(calibrationModeState);
+  const startCalibration = useSetAtom(startCalibrationAction);
+  const stopCalibration = useSetAtom(stopCalibrationAction);
 
   const hz = device.interval ? 1000 / device.interval : 0;
 
@@ -50,6 +63,22 @@ export const App: FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              calibrating ? stopCalibration() : startCalibration()
+            }
+            aria-label={calibrating ? "Stop calibration" : "Calibrate"}
+            aria-pressed={calibrating}
+            className={clsx(
+              "flex h-11 w-11 items-center justify-center rounded-full ring-1 transition active:scale-95",
+              calibrating
+                ? "bg-accent text-bg shadow-glow ring-accent/40"
+                : "bg-white/5 text-neutral-300 ring-white/10 hover:bg-white/10"
+            )}
+          >
+            <Crosshair className="h-5 w-5" />
+          </button>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -88,6 +117,7 @@ export const App: FC = () => {
         </section>
       </main>
       <Settings />
+      <Calibration />
     </div>
   );
 };

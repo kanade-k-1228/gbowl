@@ -12,7 +12,7 @@ import {
   carAccSeriesState,
   SERIES_WINDOW,
   yawRateSeriesState,
-} from "../state/sensor";
+} from "../state/series";
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 

@@ -1,7 +1,7 @@
 import { useAtom, useSetAtom } from "jotai";
 import { RESET } from "jotai/utils";
 import { RotateCcw, X } from "lucide-react";
-import { type FC, type ReactNode, useEffect, useRef } from "react";
+import type { FC, ReactNode } from "react";
 import { bowlDampingState, bowlStiffnessState } from "../state/bowl";
 import {
   soundFreqBaseState,
@@ -9,33 +9,19 @@ import {
   soundVolumeState,
 } from "../state/sound";
 import { settingsOpenState } from "../state/ui";
+import { Modal } from "./Modal";
 
 export const Settings: FC = () => {
   const [open, setOpen] = useAtom(settingsOpenState);
-  const ref = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
+  const close = () => setOpen(false);
 
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: ESC is handled by native <dialog>.
-    <dialog
-      ref={ref}
-      onClose={() => setOpen(false)}
-      onClick={(e) => {
-        if (e.target === ref.current) setOpen(false);
-      }}
-      className="w-full max-w-md rounded-2xl bg-bg-elevated p-6 text-neutral-100 ring-1 ring-white/10 backdrop:bg-black/60 backdrop:backdrop-blur"
-    >
+    <Modal open={open} onClose={close} label="Settings">
       <div className="mb-5 flex items-center justify-between">
         <h2 className="font-bold text-lg">Settings</h2>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={close}
           aria-label="Close"
           className="text-neutral-400 transition hover:text-white"
         >
@@ -55,7 +41,7 @@ export const Settings: FC = () => {
       </Section>
 
       <ResetButton />
-    </dialog>
+    </Modal>
   );
 };
 

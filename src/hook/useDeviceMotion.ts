@@ -1,13 +1,19 @@
-import { useSetAtom } from "jotai";
+import { useStore } from "jotai";
 import { useEffect } from "react";
-import { deviceMotionState } from "../state/sensor";
+import { stepBowlSimulation } from "../state/bowl";
+import { stepCalibrationImu } from "../state/calibration";
+import { deviceMotionState } from "../state/motion";
+import { stepRecordSeries } from "../state/series";
 
+// devicemotion イベントを購読して入力ハブ deviceMotionState に流し込み、
+// その後で各 step (calibration / bowl / series) を順に走らせる。state 層は
+// 引数で motion を受け取るだけなので、フック層がオーケストレータとなる。
 export const useDeviceMotion = () => {
-  const setMotion = useSetAtom(deviceMotionState);
+  const store = useStore();
 
   useEffect(() => {
     const handler = (e: DeviceMotionEvent) => {
-      setMotion({
+      store.set(deviceMotionState, {
         acceleration: {
           x: e.acceleration?.x ?? 0,
           y: e.acceleration?.y ?? 0,
@@ -25,43 +31,12 @@ export const useDeviceMotion = () => {
         },
         interval: e.interval,
       });
+      const m = store.get(deviceMotionState);
+      stepCalibrationImu(store.get, store.set, m);
+      stepBowlSimulation(store.get, store.set, m);
+      stepRecordSeries(store.get, store.set, m);
     };
     window.addEventListener("devicemotion", handler);
     return () => window.removeEventListener("devicemotion", handler);
-  }, [setMotion]);
-
-  // iOS Safari requires DeviceMotionEvent.requestPermission() from a user
-  // gesture (click / touchend). pointerdown is not reliably accepted as
-  // transient activation, so we listen on both click and touchend and
-  // re-arm if the call rejects (e.g. denied) so a later tap can retry.
-  useEffect(() => {
-    type RequestFn = () => Promise<"granted" | "denied" | "default">;
-    const Ctor = DeviceMotionEvent as unknown as {
-      requestPermission?: RequestFn;
-    };
-    if (typeof Ctor.requestPermission !== "function") return;
-    const request: RequestFn = Ctor.requestPermission.bind(Ctor);
-
-    let pending = false;
-    const cleanup = () => {
-      window.removeEventListener("click", onGesture, true);
-      window.removeEventListener("touchend", onGesture, true);
-    };
-    function onGesture() {
-      if (pending) return;
-      pending = true;
-      request()
-        .then((state) => {
-          if (state === "granted") cleanup();
-          else pending = false;
-        })
-        .catch((err) => {
-          console.warn("[useDeviceMotion] requestPermission failed", err);
-          pending = false;
-        });
-    }
-    window.addEventListener("click", onGesture, true);
-    window.addEventListener("touchend", onGesture, true);
-    return cleanup;
-  }, []);
+  }, [store]);
 };

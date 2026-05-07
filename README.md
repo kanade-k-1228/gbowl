@@ -1,4 +1,4 @@
-# G-Moni
+# G-Monitor
 
 Monitor your driving habits and improve your driving skills with G-Bowl.
 

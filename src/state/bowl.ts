@@ -1,7 +1,7 @@
 import { atom, type Getter, type Setter } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import type { DeviceMotion } from "../type/type";
-import { matrixState } from "./fusion";
+import { matrixState } from "./frame";
 
 // ============================================================
 // Bowl simulation — equivalent to a 2nd-order LPF on -a_car.
