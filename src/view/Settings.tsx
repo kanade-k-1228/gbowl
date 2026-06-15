@@ -3,6 +3,7 @@ import { RESET } from "jotai/utils";
 import { RotateCcw, X } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { bowlDampingState, bowlStiffnessState } from "../state/bowl";
+import { fwdTauState, speedMinState, upTauState } from "../state/frame";
 import {
   soundFreqBaseState,
   soundFreqRangeState,
@@ -34,6 +35,12 @@ export const Settings: FC = () => {
         <BowlDampingSlider />
       </Section>
 
+      <Section title="Estimation">
+        <UpTauSlider />
+        <FwdTauSlider />
+        <SpeedMinSlider />
+      </Section>
+
       <Section title="Sound">
         <VolumeSlider />
         <FreqBaseSlider />
@@ -48,6 +55,9 @@ export const Settings: FC = () => {
 const ResetButton: FC = () => {
   const resetStiffness = useSetAtom(bowlStiffnessState);
   const resetDamping = useSetAtom(bowlDampingState);
+  const resetUpTau = useSetAtom(upTauState);
+  const resetFwdTau = useSetAtom(fwdTauState);
+  const resetSpeedMin = useSetAtom(speedMinState);
   const resetVolume = useSetAtom(soundVolumeState);
   const resetFreqBase = useSetAtom(soundFreqBaseState);
   const resetFreqRange = useSetAtom(soundFreqRangeState);
@@ -57,6 +67,9 @@ const ResetButton: FC = () => {
       onClick={() => {
         resetStiffness(RESET);
         resetDamping(RESET);
+        resetUpTau(RESET);
+        resetFwdTau(RESET);
+        resetSpeedMin(RESET);
         resetVolume(RESET);
         resetFreqBase(RESET);
         resetFreqRange(RESET);
@@ -142,6 +155,51 @@ const BowlDampingSlider: FC = () => {
       min={0}
       max={10}
       step={0.1}
+      onChange={setV}
+    />
+  );
+};
+
+const UpTauSlider: FC = () => {
+  const [v, setV] = useAtom(upTauState);
+  return (
+    <Slider
+      label="Up response"
+      value={v}
+      min={0.1}
+      max={3}
+      step={0.1}
+      unit="s"
+      onChange={setV}
+    />
+  );
+};
+
+const FwdTauSlider: FC = () => {
+  const [v, setV] = useAtom(fwdTauState);
+  return (
+    <Slider
+      label="Forward response"
+      value={v}
+      min={1}
+      max={30}
+      step={1}
+      unit="s"
+      onChange={setV}
+    />
+  );
+};
+
+const SpeedMinSlider: FC = () => {
+  const [v, setV] = useAtom(speedMinState);
+  return (
+    <Slider
+      label="Min speed"
+      value={v}
+      min={0}
+      max={20}
+      step={1}
+      unit="m/s"
       onChange={setV}
     />
   );

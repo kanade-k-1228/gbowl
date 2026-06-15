@@ -1,9 +1,30 @@
-import { atom } from "jotai";
-import { forwardDevState, gravityDevState } from "./calibration";
+import { atom, type Getter, type Setter } from "jotai";
+import { atomWithStorage } from "jotai/utils";
+import type { DeviceMotion, M3, V3 } from "../type/type";
+import { gpsMotionState } from "./gps";
 import { deviceMotionState } from "./motion";
+import {
+  deviceOrientationState,
+  orientationGravityState,
+  orientationMatrixState,
+} from "./orientation";
 
-type V3 = [number, number, number];
-type M3 = [V3, V3, V3];
+// device frame における重力ベクトルと前方軸。動的キャリブが毎フレーム EMA 更新し、
+// localStorage に保存する。次回起動時は前回値が復元され、収束まで引き継ぐ。
+// forward デフォルト [0,1,0] = 縦持ちで画面上端が車の前方。
+export const gravityDevState = atomWithStorage<V3>(
+  "gbowl.calibration.gravity",
+  [0, 0, 9.8]
+);
+export const forwardDevState = atomWithStorage<V3>(
+  "gbowl.calibration.forward",
+  [0, 1, 0]
+);
+
+// 動的キャリブの調整パラメータ (Settings のスライダーで露出)。
+export const upTauState = atomWithStorage("gbowl.estimation.upTau", 0.5);
+export const fwdTauState = atomWithStorage("gbowl.estimation.fwdTau", 8);
+export const speedMinState = atomWithStorage("gbowl.estimation.speedMin", 5);
 
 const identity = (): M3 => [
   [1, 0, 0],
@@ -54,3 +75,87 @@ export const carState = atom<V3>((get) => {
     M[2][0] * x + M[2][1] * y + M[2][2] * z,
   ];
 });
+
+// 曲線中は遠心力が forward 推定をバイアスさせるので、ヨーレートが大きいフレームは
+// forward 更新をスキップする。
+const YAW_GATE = 8; // deg/s
+const GRAVITY_TAU_FALLBACK = 2; // s, DeviceOrientation 非対応時の重力 EMA
+
+const lerp3 = (a: V3, b: V3, t: number): V3 => [
+  a[0] + t * (b[0] - a[0]),
+  a[1] + t * (b[1] - a[1]),
+  a[2] + t * (b[2] - a[2]),
+];
+
+const normalize = (v: V3): V3 | null => {
+  const n = Math.hypot(v[0], v[1], v[2]);
+  return n > 1e-6 ? [v[0] / n, v[1] / n, v[2] / n] : null;
+};
+
+// 毎 motion イベントで呼ばれ、DeviceOrientation/GPS から up/forward を動的補正する。
+// matrixState 経由で bowl/series がこの結果を読むので、他 step より先に呼ぶ。
+export const stepEstimateFrame = (
+  get: Getter,
+  set: Setter,
+  m: DeviceMotion
+) => {
+  const dt = m.interval / 1000;
+  if (!Number.isFinite(dt) || dt <= 0 || dt > 0.5) return;
+
+  // --- up (gravity) 動的更新 ---
+  const prevG = get(gravityDevState);
+  const gOri = get(orientationGravityState);
+  if (gOri) {
+    // DeviceOrientation の融合済み重力。速い時定数で追従。
+    const aUp = Math.min(1, dt / get(upTauState));
+    set(gravityDevState, lerp3(prevG, gOri, aUp));
+  } else {
+    // フォールバック: accIG - acc を上向き重力として EMA (時定数 2s 固定)。
+    const gx = m.accelerationIncludingGravity.x - m.acceleration.x;
+    const gy = m.accelerationIncludingGravity.y - m.acceleration.y;
+    const gz = m.accelerationIncludingGravity.z - m.acceleration.z;
+    if (Math.hypot(gx, gy, gz) >= 1) {
+      const aUp = Math.min(1, dt / GRAVITY_TAU_FALLBACK);
+      set(gravityDevState, lerp3(prevG, [gx, gy, gz], aUp));
+    }
+  }
+
+  // --- forward 動的更新 (絶対方位 + 高速 + 直進時のみ) ---
+  const R = get(orientationMatrixState);
+  const o = get(deviceOrientationState);
+  const gps = get(gpsMotionState);
+  const hasAbsolute =
+    o.headingSource === "ios-compass" || o.headingSource === "android-absolute";
+  if (
+    !R ||
+    !hasAbsolute ||
+    !gps ||
+    gps.speed === null ||
+    gps.speed < get(speedMinState) ||
+    gps.heading === null ||
+    !Number.isFinite(gps.heading)
+  ) {
+    return;
+  }
+
+  // 直進ゲート: up 軸まわりのヨーレート (matrixState は up 更新済み)。
+  const M = get(matrixState);
+  const r = m.rotationRate;
+  const yaw = M[2][0] * r.alpha + M[2][1] * r.beta + M[2][2] * r.gamma;
+  if (Math.abs(yaw) >= YAW_GATE) return;
+
+  // world 水平の車前方 [sin h, cos h, 0] を device frame へ: fwd = Rᵀ·worldFwd。
+  const h = (gps.heading * Math.PI) / 180;
+  const sh = Math.sin(h);
+  const ch = Math.cos(h);
+  const fwd = normalize([
+    R[0][0] * sh + R[1][0] * ch,
+    R[0][1] * sh + R[1][1] * ch,
+    R[0][2] * sh + R[1][2] * ch,
+  ]);
+  if (!fwd) return;
+
+  const aFwd = Math.min(1, dt / get(fwdTauState));
+  const blended = normalize(lerp3(get(forwardDevState), fwd, aFwd));
+  if (blended) set(forwardDevState, blended);
+};

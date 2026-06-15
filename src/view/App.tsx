@@ -1,35 +1,30 @@
 import clsx from "clsx";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { Crosshair, Pause, Play, Settings as SettingsIcon } from "lucide-react";
+import { Compass, Pause, Play, Settings as SettingsIcon } from "lucide-react";
 import type { FC } from "react";
 import { useDeviceMotion } from "../hook/useDeviceMotion";
+import { useDeviceOrientation } from "../hook/useDeviceOrientation";
 import { useGeolocation } from "../hook/useGeolocation";
 import { usePermissions } from "../hook/usePermissions";
 import { useSound } from "../hook/useSound";
-import {
-  calibrationModeState,
-  startCalibrationAction,
-  stopCalibrationAction,
-} from "../state/calibration";
 import { deviceMotionState } from "../state/motion";
+import { orientationStatusState } from "../state/orientation";
 import { soundToggleState } from "../state/sound";
 import { settingsOpenState } from "../state/ui";
+import type { HeadingSource } from "../type/type";
 import { Bowl } from "./Bowl";
-import { Calibration } from "./Calibration";
 import { Plot } from "./Plot";
 import { Settings } from "./Settings";
 
 export const App: FC = () => {
   usePermissions();
   useDeviceMotion();
+  useDeviceOrientation();
   useGeolocation();
   const { start, stop } = useSound();
   const device = useAtomValue(deviceMotionState);
   const [running, setRunning] = useAtom(soundToggleState);
   const setSettingsOpen = useSetAtom(settingsOpenState);
-  const calibrating = useAtomValue(calibrationModeState);
-  const startCalibration = useSetAtom(startCalibrationAction);
-  const stopCalibration = useSetAtom(stopCalibrationAction);
 
   const hz = device.interval ? 1000 / device.interval : 0;
 
@@ -61,24 +56,9 @@ export const App: FC = () => {
               {hz > 0 ? `${hz.toFixed(0)} Hz` : "idle"}
             </span>
           </div>
+          <OrientationBadge />
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() =>
-              calibrating ? stopCalibration() : startCalibration()
-            }
-            aria-label={calibrating ? "Stop calibration" : "Calibrate"}
-            aria-pressed={calibrating}
-            className={clsx(
-              "flex h-11 w-11 items-center justify-center rounded-full ring-1 transition active:scale-95",
-              calibrating
-                ? "bg-accent text-bg shadow-glow ring-accent/40"
-                : "bg-white/5 text-neutral-300 ring-white/10 hover:bg-white/10"
-            )}
-          >
-            <Crosshair className="h-5 w-5" />
-          </button>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -117,7 +97,39 @@ export const App: FC = () => {
         </section>
       </main>
       <Settings />
-      <Calibration />
+    </div>
+  );
+};
+
+const HEADING_LABEL: Record<HeadingSource, string> = {
+  "ios-compass": "mag",
+  "android-absolute": "abs",
+  relative: "rel",
+  none: "—",
+};
+
+// DeviceOrientation の可用性と絶対方位ソースを示す診断バッジ。
+// accent = forward 動的キャリブ可、amber = up のみ高精度、灰 = 非対応。
+const OrientationBadge: FC = () => {
+  const status = useAtomValue(orientationStatusState);
+  const absolute =
+    status.headingSource === "ios-compass" ||
+    status.headingSource === "android-absolute";
+  return (
+    <div className="flex items-center gap-1.5">
+      <Compass
+        className={clsx(
+          "h-3.5 w-3.5",
+          absolute
+            ? "text-accent"
+            : status.available
+              ? "text-amber-400"
+              : "text-neutral-600"
+        )}
+      />
+      <span className="num text-[11px] text-neutral-400 uppercase tracking-wider">
+        {HEADING_LABEL[status.headingSource]}
+      </span>
     </div>
   );
 };

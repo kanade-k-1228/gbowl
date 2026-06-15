@@ -1,23 +1,23 @@
-import { useAtomValue, useSetAtom } from "jotai";
+import { useStore } from "jotai";
 import { useEffect } from "react";
-import { calibrationModeState, ingestGpsSample } from "../state/calibration";
+import { gpsMotionState } from "../state/gps";
 
-// キャリブレーションモードの間だけ watchPosition を起動して、
-// 取得した fix を ingestGpsSample に流し込む。
+// 常時 watchPosition して最新 GPS (heading/speed 含む) を gpsMotionState に流す。
+// forward 軸の動的キャリブが進行方位を参照する。
 export const useGeolocation = () => {
-  const calibrating = useAtomValue(calibrationModeState);
-  const ingest = useSetAtom(ingestGpsSample);
+  const store = useStore();
 
   useEffect(() => {
-    if (!calibrating) return;
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
 
     const id = navigator.geolocation.watchPosition(
       (pos) => {
-        ingest({
+        store.set(gpsMotionState, {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
+          speed: pos.coords.speed,
+          heading: pos.coords.heading,
           t: pos.timestamp,
         });
       },
@@ -27,5 +27,5 @@ export const useGeolocation = () => {
       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
     );
     return () => navigator.geolocation.clearWatch(id);
-  }, [calibrating, ingest]);
+  }, [store]);
 };

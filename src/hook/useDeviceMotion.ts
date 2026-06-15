@@ -1,13 +1,14 @@
 import { useStore } from "jotai";
 import { useEffect } from "react";
 import { stepBowlSimulation } from "../state/bowl";
-import { stepCalibrationImu } from "../state/calibration";
+import { stepEstimateFrame } from "../state/frame";
 import { deviceMotionState } from "../state/motion";
 import { stepRecordSeries } from "../state/series";
 
-// devicemotion イベントを購読して入力ハブ deviceMotionState に流し込み、
-// その後で各 step (calibration / bowl / series) を順に走らせる。state 層は
-// 引数で motion を受け取るだけなので、フック層がオーケストレータとなる。
+// devicemotion イベントを購読して入力ハブ deviceMotionState に流し込み、その後で
+// 各 step を順に走らせる。stepEstimateFrame が up/forward を更新して matrixState を
+// 最新化してから bowl/series が読むので、最初に呼ぶ。state 層は引数で motion を
+// 受け取るだけなので、フック層がオーケストレータとなる。
 export const useDeviceMotion = () => {
   const store = useStore();
 
@@ -32,7 +33,7 @@ export const useDeviceMotion = () => {
         interval: e.interval,
       });
       const m = store.get(deviceMotionState);
-      stepCalibrationImu(store.get, store.set, m);
+      stepEstimateFrame(store.get, store.set, m);
       stepBowlSimulation(store.get, store.set, m);
       stepRecordSeries(store.get, store.set, m);
     };

@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 
-// アプリ起動直後の最初の click / touchend で、DeviceMotion と Geolocation の
-// 許可をまとめてユーザーに求める。iOS Safari の DeviceMotionEvent.requestPermission
-// は user gesture が必要なので、両方を同じ gesture に乗せて 1 回で済ませる。
+// アプリ起動直後の最初の click / touchend で、DeviceMotion / DeviceOrientation /
+// Geolocation の許可をまとめてユーザーに求める。iOS Safari の
+// DeviceMotionEvent / DeviceOrientationEvent の requestPermission は user gesture
+// が必要なので、同じ gesture に乗せて 1 回で済ませる。
 export const usePermissions = () => {
   useEffect(() => onFirstGesture(requestMotion), []);
+  useEffect(() => onFirstGesture(requestOrientation), []);
   useEffect(() => onFirstGesture(requestGeo), []);
 };
 
@@ -29,8 +31,9 @@ const onFirstGesture = (request: () => Promise<boolean>) => {
   return cleanup;
 };
 
+type RequestFn = () => Promise<"granted" | "denied" | "default">;
+
 const requestMotion = async (): Promise<boolean> => {
-  type RequestFn = () => Promise<"granted" | "denied" | "default">;
   const Ctor = DeviceMotionEvent as unknown as {
     requestPermission?: RequestFn;
   };
@@ -40,6 +43,20 @@ const requestMotion = async (): Promise<boolean> => {
     return state !== "default";
   } catch (err) {
     console.warn("[usePermissions] DeviceMotion", err);
+    return false;
+  }
+};
+
+const requestOrientation = async (): Promise<boolean> => {
+  const Ctor = DeviceOrientationEvent as unknown as {
+    requestPermission?: RequestFn;
+  };
+  if (typeof Ctor.requestPermission !== "function") return true;
+  try {
+    const state = await Ctor.requestPermission.call(DeviceOrientationEvent);
+    return state !== "default";
+  } catch (err) {
+    console.warn("[usePermissions] DeviceOrientation", err);
     return false;
   }
 };
